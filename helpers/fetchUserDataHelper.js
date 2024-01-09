@@ -2,7 +2,7 @@ const User = require("../models/User");
 const axios = require("axios");
 
 const url = process.env.LEETCODE_GRAPHQL_BASE_URL;
-const batchSize = 500;
+const batchSize = 250;
 const timeoutBetweenBatches = 1000;
 async function updateUserData(username, rating, contestsCount) {
   try {

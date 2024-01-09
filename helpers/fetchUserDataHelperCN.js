@@ -3,7 +3,7 @@ const axios = require("axios");
 
 const url = process.env.LEETCODE_GRAPHQL_BASE_URL_CN;
 const batchSize = 10;
-const timeoutBetweenBatches = 500;
+const timeoutBetweenBatches = 1000;
 async function updateUserData(username, rating, contestsCount) {
   try {
     const user = await User.findOne({ username });

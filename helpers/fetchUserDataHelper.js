@@ -25,37 +25,52 @@ async function updateUserData(username, rating, contestsCount) {
 }
 
 async function fetchUserDetailsBatch(usernames) {
+  const maxRetries = 3;
+  const retryDelay = 10;
+
   const promises = usernames.map(async (username) => {
-    try {
-      const query = `
-        query userContestRankingInfo($username: String!) {
-          userContestRanking(username: $username) {
-            attendedContestsCount
-            rating
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      try {
+        const query = `
+          query userContestRankingInfo($username: String!) {
+            userContestRanking(username: $username) {
+              attendedContestsCount
+              rating
+            }
           }
+        `;
+
+        const response = await axios.post(url, {
+          query,
+          variables: { username },
+        });
+
+        const { rating, attendedContestsCount } =
+          response.data.data.userContestRanking || {};
+
+        await updateUserData(
+          username,
+          rating !== null ? rating : 1500,
+          attendedContestsCount !== null ? attendedContestsCount : 0
+        );
+
+        break;
+      } catch (err) {
+        console.error(`Failed to fetch user details for ${username}: ${err}`);
+        retryCount++;
+
+        if (retryCount < maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay));
         }
-      `;
-
-      const response = await axios.post(url, {
-        query,
-        variables: { username },
-      });
-
-      const { rating, attendedContestsCount } =
-        response.data.data.userContestRanking || {};
-
-      await updateUserData(
-        username,
-        rating !== null ? rating : 1500,
-        attendedContestsCount !== null ? attendedContestsCount : 0
-      );
-    } catch (err) {
-      console.error(`Failed to fetch user details for ${username}: ${err}`);
+      }
     }
   });
 
   await Promise.all(promises);
 }
+
 
 async function fetchUserDataHelper(usernames) {
   try {

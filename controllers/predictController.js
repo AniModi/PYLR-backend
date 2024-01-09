@@ -1,5 +1,7 @@
 const MergedContest = require("../models/MergedContest");
+const PredictedUserRatings = require("../models/PredictedRatings");
 const User = require("../models/User");
+const { getPredictedRatings } = require("../scripts/predictionAlgorithm");
 
 async function fetchAllUsernames(contestID) {
   try {
@@ -40,7 +42,7 @@ async function fetchData(sortedUsernames) {
   const contestCounts = allUserData.map((user) => user.contestsCount);
   const ratings = allUserData.map((user) => user.rating);
 
-  return [contestCounts, ratings];
+  return [ratings, contestCounts];
 }
 
 async function predictRating(req, res) {
@@ -56,77 +58,35 @@ async function predictRating(req, res) {
 
     const response = await fetchData(sortedUsernames);
 
-    res.json(response);
+    await getPredictedRatings(response[0], response[1], sortedUsernames);
+
+    res.json({
+      message: "Ratings predicted successfully!",
+    });
   } catch (err) {
     console.error(`Error predicting rating: ${err}`);
     res.status(500).json({ error: "Internal Server Error" });
   }
 }
 
-const memo = {};
+async function fetchPredictedRating(req, res) {
+  try {
+    const { usernames } = req.body;
 
-function f(k) {
-  function g(k) {
-    if (k in memo) {
-      return memo[k];
-    }
+    const ratings = await PredictedUserRatings.find({
+      username: { $in: usernames },
+    });
 
-    if (k >= 1) {
-      const result = (5 / 7) ** k + g(k - 1);
-      memo[k] = result;
-      return result;
-    }
-
-    return 1;
+    res.json({ ratings: ratings });
+  } catch (err) {
+    res.status(500).json({
+      message: "Failed to fetch rating from database",
+      error: err,
+    });
   }
-
-  if (k <= 100) {
-    return 1 / (1 + g(k));
-  }
-
-  return 2 / 9;
-}
-
-function getEstimatedRating(rating, ratings) {
-  const func = (a, b) => {
-    const x = 1 + 10 ** ((a - b) / 400);
-    return 1 / x;
-  };
-  let ans = 0;
-  for (let i = 0; i < ratings.length; i++) {
-    ans += func(rating, ratings[i]);
-  }
-  return ans;
-}
-
-function getEstimatedRank(estimatedRating, rank) {
-  return Math.sqrt(rank * estimatedRating);
-}
-
-function binary_search_rating(m, ratings) {
-  let estimate = m - 0.5;
-  let low = 0,
-    high = 4000; // max rating will not be 4k (as of now)
-  let precision = 0.01;
-  let max_iterations = 25;
-  while (high - low > precision && max_iterations >= 0) {
-    var mid = low + (high - low) / 2;
-    if (getEstimatedRating(mid, ratings) < estimate) {
-      high = mid;
-    } else {
-      low = mid;
-    }
-    max_iterations--;
-  }
-  return mid;
-}
-
-function getPredictedRatings(ratings, u) {
-  let er0 = getEstimatedRating(ratings[u], ratings);
-  let m = getEstimatedRank(er0, u + 1);
-  return binary_search_rating(m, ratings);
 }
 
 module.exports = {
   predictRating,
+  fetchPredictedRating,
 };

@@ -6,6 +6,10 @@ const PredictedUserRatingSchema = new Schema({
     type: String,
     required: true,
   },
+  contestID: {
+    type: String,
+    required: true,
+  },
   delta: {
     type: Number,
     default: 0,
@@ -13,7 +17,7 @@ const PredictedUserRatingSchema = new Schema({
 });
 
 const PredictedUserRatings = mongoose.model(
-  "predicted",
+  "predicted-ratings",
   PredictedUserRatingSchema
 );
 

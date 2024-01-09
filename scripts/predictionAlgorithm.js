@@ -78,10 +78,10 @@ async function processBatch(
   endIndex,
   ratings,
   counts,
-  sortedUsernames
+  sortedUsernames,
+  contestID
 ) {
   const bulkOps = [];
-
   for (let user = startIndex; user < endIndex; user++) {
     let initialGuess = getEstimatedRating(ratings[user], ratings);
     let m = getEstimatedRank(initialGuess, user + 1);
@@ -91,7 +91,7 @@ async function processBatch(
     const updateOperation = {
       updateOne: {
         filter: { username: sortedUsernames[user] },
-        update: { $set: { delta: change } },
+        update: { $set: { delta: change, contestID: contestID } },
         upsert: true,
       },
     };
@@ -102,14 +102,14 @@ async function processBatch(
   PredictedUserRatings.bulkWrite(bulkOps);
 }
 
-async function getPredictedRatings(ratings, counts, sortedUsernames) {
+async function getPredictedRatings(ratings, counts, sortedUsernames, contestID) {
   const totalUsers = sortedUsernames.length;
 
   const promises = [];
 
   for (let i = 0; i < totalUsers; i += batchSize) {
     const endIndex = Math.min(i + batchSize, totalUsers);
-    const promise = processBatch(i, endIndex, ratings, counts, sortedUsernames);
+    const promise = processBatch(i, endIndex, ratings, counts, sortedUsernames, contestID);
     promises.push(promise);
     console.log(endIndex);
   }

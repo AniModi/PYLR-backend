@@ -58,7 +58,7 @@ async function predictRating(req, res) {
 
     const response = await fetchData(sortedUsernames);
 
-    await getPredictedRatings(response[0], response[1], sortedUsernames);
+    await getPredictedRatings(response[0], response[1], sortedUsernames, contestID);
 
     res.json({
       message: "Ratings predicted successfully!",

@@ -30,3 +30,4 @@ const predictRoutes = require("./routes/predictRoutes");
 app.use("/api/", contestRoutes);
 app.use("/api/", userRoutes);
 app.use("/api/", predictRoutes);
+app.get("/api/keep-alive", (req, res) => res.json({message : "I am active!"}));

@@ -71,10 +71,11 @@ async function predictRating(req, res) {
 
 async function fetchPredictedRating(req, res) {
   try {
-    const { usernames } = req.body;
+    const { usernames, contestID } = req.body;
 
     const ratings = await PredictedUserRatings.find({
       username: { $in: usernames },
+      contestID: contestID
     });
 
     res.json({ ratings: ratings });

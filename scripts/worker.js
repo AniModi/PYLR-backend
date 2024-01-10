@@ -83,8 +83,7 @@ async function processBatch(
     bulkOps.push(updateOperation);
   }
 
-  console.log(endIndex);
-  parentPort.postMessage({bulkOps});
+  parentPort.postMessage({ bulkOps });
 }
 
 processBatch(...workerData);

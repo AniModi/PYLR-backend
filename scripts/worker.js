@@ -1,5 +1,3 @@
-const PredictedUserRatings = require("../models/PredictedRatings");
-
 const memo = {};
 
 function f(k) {
@@ -57,6 +55,7 @@ function binary_search_rating(m, ratings) {
   }
   return mid;
 }
+const { workerData, parentPort } = require("worker_threads");
 
 async function processBatch(
   startIndex,
@@ -84,44 +83,8 @@ async function processBatch(
     bulkOps.push(updateOperation);
   }
 
-  PredictedUserRatings.bulkWrite(bulkOps);
+  console.log(endIndex);
+  parentPort.postMessage({bulkOps});
 }
 
-async function getPredictedRatings(
-  ratings,
-  counts,
-  sortedUsernames,
-  contestID
-) {
-  const os = require("os");
-  const cpuCount = os.cpus().length - 1;
-  const totalUsers = sortedUsernames.length;
-  const batchSize = totalUsers / cpuCount;
-  const { Worker } = require("worker_threads");
-  const path = require("path");
-  const workerPath = path.resolve(__dirname, "worker.js");
-
-  const workers = [];
-
-  for (let i = 0; i < totalUsers; i += batchSize) {
-    const endIndex = Math.min(i + batchSize, totalUsers);
-    const worker = new Worker(workerPath, {
-      workerData: [i, endIndex, ratings, counts, sortedUsernames, contestID],
-    });
-    workers.push(
-      new Promise((res) => {
-        worker.on("message", async (e) => {
-          const bulkOps = e.bulkOps;
-          await PredictedUserRatings.bulkWrite(bulkOps);
-          res();
-        });
-      })
-    );
-    console.log("batch" + endIndex);
-  }
-  await Promise.all(workers);
-}
-
-module.exports = {
-  getPredictedRatings,
-};
+processBatch(...workerData);

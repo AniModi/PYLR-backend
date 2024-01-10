@@ -69,25 +69,7 @@ async function predictRating(req, res) {
   }
 }
 
-async function fetchPredictedRating(req, res) {
-  try {
-    const { usernames, contestID } = req.body;
-
-    const ratings = await PredictedUserRatings.find({
-      username: { $in: usernames },
-      contestID: contestID
-    });
-
-    res.json({ ratings: ratings });
-  } catch (err) {
-    res.status(500).json({
-      message: "Failed to fetch rating from database",
-      error: err,
-    });
-  }
-}
 
 module.exports = {
   predictRating,
-  fetchPredictedRating,
 };

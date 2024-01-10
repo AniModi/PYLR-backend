@@ -25,9 +25,11 @@ connectToMongo();
 const contestRoutes = require("./routes/contestRoutes");
 const userRoutes = require("./routes/userRoutes");
 const predictRoutes = require("./routes/predictRoutes");
+const frontendRequestRoutes = require("./routes/frontendRequestRoutes");
 
 
 app.use("/api/", contestRoutes);
 app.use("/api/", userRoutes);
 app.use("/api/", predictRoutes);
+app.use("/api/", frontendRequestRoutes);
 app.get("/api/keep-alive", (req, res) => res.json({message : "I am active!"}));
